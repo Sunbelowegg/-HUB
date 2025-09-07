@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>完整版倉庫庫存管理系統</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- 標題區域 -->
+        <header class="header">
+            <h1><i class="fas fa-warehouse"></i> 完整版倉庫庫存管理系統</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="showHistoryModal()">
+                    <i class="fas fa-history"></i> 變動記錄
+                </button>
+                <button class="btn btn-success" onclick="showPurchaseModal()">
+                    <i class="fas fa-shopping-cart"></i> 進貨明細
+                </button>
+                <button class="btn btn-warning" onclick="showSalesModal()">
+                    <i class="fas fa-cash-register"></i> 出貨明細
+                </button>
+                <button class="btn btn-info" onclick="showMonthlyReportModal()">
+                    <i class="fas fa-chart-bar"></i> 月度對照
+                </button>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> 匯出資料
+                </button>
+            </div>
+        </header>
+
+        <!-- 區域選擇器 -->
+        <div class="region-selector">
+            <h3><i class="fas fa-map-marker-alt"></i> 區域管理</h3>
+            <div class="region-tabs">
+                <button class="region-tab active" data-region="all" onclick="switchRegion('all')">
+                    <i class="fas fa-globe"></i> 全部區域
+                </button>
+                <button class="region-tab" data-region="north" onclick="switchRegion('north')">
+                    <i class="fas fa-mountain"></i> 北部
+                </button>
+                <button class="region-tab" data-region="central" onclick="switchRegion('central')">
+                    <i class="fas fa-city"></i> 中部
+                </button>
+                <button class="region-tab" data-region="south" onclick="switchRegion('south')">
+                    <i class="fas fa-sun"></i> 南部
+                </button>
+            </div>
+        </div>
+
+        <!-- 統計卡片區域 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalProducts">0</h3>
+                    <p>總商品數</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-cubes"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalStock">0</h3>
+                    <p>總庫存量</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="lowStockCount">0</h3>
+                    <p>低庫存商品</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-content">
+                    <h3 id="totalCategories">0</h3>
+                    <p>商品類別數</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 區域統計 -->
+        <div class="region-stats" id="regionStats">
+            <div class="region-stat-card">
+                <div class="region-header">
+                    <i class="fas fa-mountain"></i>
+                    <h4>北部</h4>
+                </div>
+                <div class="region-numbers">
+                    <div class="region-number">
+                        <span class="number" id="northProducts">0</span>
+                        <span class="label">商品</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="northStock">0</span>
+                        <span class="label">庫存</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="northCategories">0</span>
+                        <span class="label">類別</span>
+                    </div>
+                </div>
+            </div>
+            <div class="region-stat-card">
+                <div class="region-header">
+                    <i class="fas fa-city"></i>
+                    <h4>中部</h4>
+                </div>
+                <div class="region-numbers">
+                    <div class="region-number">
+                        <span class="number" id="centralProducts">0</span>
+                        <span class="label">商品</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="centralStock">0</span>
+                        <span class="label">庫存</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="centralCategories">0</span>
+                        <span class="label">類別</span>
+                    </div>
+                </div>
+            </div>
+            <div class="region-stat-card">
+                <div class="region-header">
+                    <i class="fas fa-sun"></i>
+                    <h4>南部</h4>
+                </div>
+                <div class="region-numbers">
+                    <div class="region-number">
+                        <span class="number" id="southProducts">0</span>
+                        <span class="label">商品</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="southStock">0</span>
+                        <span class="label">庫存</span>
+                    </div>
+                    <div class="region-number">
+                        <span class="number" id="southCategories">0</span>
+                        <span class="label">類別</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜尋和篩選區域 -->
+        <div class="search-section">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="搜尋商品名稱或編號...">
+            </div>
+            <div class="filter-controls">
+                <select id="categoryFilter">
+                    <option value="">所有類別</option>
+                </select>
+                <select id="stockFilter">
+                    <option value="">所有庫存狀態</option>
+                    <option value="low">低庫存</option>
+                    <option value="normal">正常庫存</option>
+                    <option value="out">缺貨</option>
+                </select>
+                <input type="text" id="regionFilter" placeholder="區域篩選">
+            </div>
+        </div>
+
+        <!-- 商品列表區域 -->
+        <div class="products-section">
+            <div class="section-header">
+                <h2>商品列表</h2>
+                <div class="section-actions">
+                    <div class="batch-controls">
+                        <button class="btn btn-sm btn-secondary" onclick="selectAllProducts()">
+                            <i class="fas fa-check-square"></i> 全選
+                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="clearSelection()">
+                            <i class="fas fa-square"></i> 取消選擇
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="showBatchModal()" id="batchBtn" disabled>
+                            <i class="fas fa-tasks"></i> 批量操作
+                        </button>
+                    </div>
+                    <div class="view-controls">
+                        <button class="btn btn-sm" onclick="toggleView('grid')" id="gridViewBtn">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="btn btn-sm" onclick="toggleView('list')" id="listViewBtn">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="products-container" id="productsContainer">
+                <!-- 商品項目將在這裡動態生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 庫存操作模態框 -->
+    <div class="modal" id="stockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>庫存操作</h2>
+                <button class="close-btn" onclick="closeStockModal()">&times;</button>
+            </div>
+            <div class="stock-info">
+                <h3 id="stockProductName"></h3>
+                <p>目前庫存：<span id="currentStock"></span></p>
+            </div>
+            <form id="stockForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="stockOperation">操作類型</label>
+                        <select id="stockOperation" onchange="toggleStockInput()">
+                            <option value="in">入庫</option>
+                            <option value="out">出庫</option>
+                            <option value="adjust">調整</option>
+                            <option value="transfer">調撥</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="transferTargetGroup" style="display: none;">
+                        <label for="transferTarget">調撥至區域</label>
+                        <select id="transferTarget">
+                            <option value="北部">北部</option>
+                            <option value="中部">中部</option>
+                            <option value="南部">南部</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="outboundTargetGroup" style="display: none;">
+                        <label for="outboundTarget">出庫至</label>
+                        <select id="outboundTarget" onchange="toggleOutboundTargetInput()">
+                            <option value="">請選擇出庫類型</option>
+                            <option value="customer">外部客戶</option>
+                            <option value="internal">內部公司調貨</option>
+                            <option value="other">其他</option>
+                        </select>
+                        <input type="text" id="outboundTargetText" placeholder="例如：客戶名稱、部門、地址等" style="display: none; margin-top: 8px;">
+                        <select id="outboundTargetCompany" style="display: none; margin-top: 8px;">
+                            <option value="">請選擇目標公司</option>
+                            <option value="北部">北部公司</option>
+                            <option value="中部">中部公司</option>
+                            <option value="南部">南部公司</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="orderNumberGroup" style="display: none;">
+                    <label for="stockOrderNumber">編號單</label>
+                    <input type="text" id="stockOrderNumber" placeholder="請輸入編號單號碼">
+                </div>
+                <div class="form-group">
+                    <label for="stockQuantity">數量</label>
+                    <input type="number" id="stockQuantity" required>
+                </div>
+                <div class="form-group">
+                    <label for="stockReason">原因/備註</label>
+                    <input type="text" id="stockReason" placeholder="例如：進貨、銷售、盤點調整等">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeStockModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">確認</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 庫存變動歷史模態框 -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>庫存變動記錄</h2>
+                <button class="close-btn" onclick="closeHistoryModal()">&times;</button>
+            </div>
+            <div class="history-filters">
+                <div class="filter-group">
+                    <label for="historyProductFilter">商品篩選：</label>
+                    <select id="historyProductFilter">
+                        <option value="">所有商品</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="historyOperationFilter">操作類型：</label>
+                    <select id="historyOperationFilter">
+                        <option value="">所有操作</option>
+                        <option value="in">入庫</option>
+                        <option value="out">出庫</option>
+                        <option value="adjust">調整</option>
+                        <option value="transfer">調撥</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="historyDateFilter">日期範圍：</label>
+                    <input type="date" id="historyDateFrom">
+                    <span>至</span>
+                    <input type="date" id="historyDateTo">
+                </div>
+            </div>
+            <div class="history-content">
+                <div class="history-list" id="historyList">
+                    <!-- 歷史記錄將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量操作模態框 -->
+    <div class="modal" id="batchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>批量操作</h2>
+                <button class="close-btn" onclick="closeBatchModal()">&times;</button>
+            </div>
+            <div class="batch-content">
+                <div class="batch-info">
+                    <p>已選擇 <span id="selectedCount">0</span> 個商品</p>
+                </div>
+                <div class="batch-actions">
+                    <button class="btn btn-primary" onclick="batchOperation('in')">
+                        <i class="fas fa-plus"></i> 批量入庫
+                    </button>
+                    <button class="btn btn-warning" onclick="batchOperation('out')">
+                        <i class="fas fa-minus"></i> 批量出庫
+                    </button>
+                    <button class="btn btn-secondary" onclick="batchOperation('adjust')">
+                        <i class="fas fa-edit"></i> 批量調整
+                    </button>
+                    <button class="btn btn-danger" onclick="batchOperation('delete')">
+                        <i class="fas fa-trash"></i> 批量刪除
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 進貨明細模態框 -->
+    <div class="modal" id="purchaseModal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-shopping-cart"></i> 進貨明細管理</h2>
+                <button class="close-btn" onclick="closePurchaseModal()">&times;</button>
+            </div>
+            <div class="purchase-content">
+                <div class="purchase-actions">
+                    <button class="btn btn-primary" onclick="showNewPurchaseModal()">
+                        <i class="fas fa-plus"></i> 新增進貨單
+                    </button>
+                    <button class="btn btn-info" onclick="showNewTransferModal()">
+                        <i class="fas fa-exchange-alt"></i> 內部轉貨
+                    </button>
+                    <div class="purchase-filters">
+                        <input type="text" id="purchaseOrderNoFilter" placeholder="工單序號">
+                        <input type="text" id="purchaseSourceFilter" placeholder="進貨來源">
+                        <select id="purchaseRegionFilter">
+                            <option value="">全部區域</option>
+                            <option value="北部">北部</option>
+                            <option value="中部">中部</option>
+                            <option value="南部">南部</option>
+                        </select>
+                        <input type="date" id="purchaseDateFrom" placeholder="開始日期">
+                        <input type="date" id="purchaseDateTo" placeholder="結束日期">
+                        <button class="btn btn-sm btn-secondary" onclick="filterPurchases()">
+                            <i class="fas fa-search"></i> 篩選
+                        </button>
+                    </div>
+                </div>
+                <div class="purchase-list" id="purchaseList">
+                    <!-- 進貨單列表將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增進貨單模態框 -->
+    <div class="modal" id="newPurchaseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增進貨單</h2>
+                <button class="close-btn" onclick="closeNewPurchaseModal()">&times;</button>
+            </div>
+            <form id="purchaseForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="purchaseDate">進貨日期 *</label>
+                        <input type="date" id="purchaseDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseOrderNo">工單序號 *</label>
+                        <input type="text" id="purchaseOrderNo" required placeholder="工單序號">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="purchaseSource">進貨來源 *</label>
+                        <input type="text" id="purchaseSource" required placeholder="進貨來源">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="purchaseRegion">進貨區域 *</label>
+                        <select id="purchaseRegion" required>
+                            <option value="">請選擇進貨區</option>
+                            <option value="北部">北部</option>
+                            <option value="中部">中部</option>
+                            <option value="南部">南部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseCreator">製單人 *</label>
+                        <input type="text" id="purchaseCreator" required placeholder="製單人姓名">
+                    </div>
+                </div>
+                
+                <!-- 商品資訊 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="purchaseProductCode">產品編號 *</label>
+                        <input type="text" id="purchaseProductCode" required placeholder="輸入產品編號">
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseProduct">商品 *</label>
+                        <select id="purchaseProduct" required onchange="toggleProductInput()">
+                            <option value="">請選擇商品</option>
+                            <option value="new">+ 新增商品</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="newProductGroup" style="display: none;">
+                    <label for="newProductName">新商品名稱 *</label>
+                    <input type="text" id="newProductName" placeholder="輸入新商品名稱">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="purchaseQuantity">進貨數量 *</label>
+                        <input type="number" id="purchaseQuantity" required min="1" placeholder="進貨數量">
+                    </div>
+                    <div class="form-group">
+                        <label for="purchaseNote">備註</label>
+                        <input type="text" id="purchaseNote" placeholder="進貨備註...">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewPurchaseModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存進貨單</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 出貨明細模態框 -->
+    <div class="modal" id="salesModal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-cash-register"></i> 出貨明細管理</h2>
+                <button class="close-btn" onclick="closeSalesModal()">&times;</button>
+            </div>
+            <div class="sales-content">
+                <div class="sales-actions">
+                    <button class="btn btn-primary" onclick="showNewSalesModal()">
+                        <i class="fas fa-plus"></i> 新增出貨單
+                    </button>
+                    <div class="sales-filters">
+                        <input type="text" id="salesOrderNoFilter" placeholder="工單序號">
+                        <select id="salesRegionFilter">
+                            <option value="">全部區域</option>
+                            <option value="北部">北部</option>
+                            <option value="中部">中部</option>
+                            <option value="南部">南部</option>
+                        </select>
+                        <input type="date" id="salesDateFrom" placeholder="開始日期">
+                        <input type="date" id="salesDateTo" placeholder="結束日期">
+                        <button class="btn btn-sm btn-secondary" onclick="filterSales()">
+                            <i class="fas fa-search"></i> 篩選
+                        </button>
+                    </div>
+                </div>
+                <div class="sales-list" id="salesList">
+                    <!-- 出貨單列表將在這裡動態生成 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增轉貨單模態框 -->
+    <div class="modal" id="newTransferModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增轉貨單</h2>
+                <button class="close-btn" onclick="closeNewTransferModal()">&times;</button>
+            </div>
+            <form id="transferForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transferDate">轉貨日期 *</label>
+                        <input type="date" id="transferDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="transferOrderNo">工單序號 *</label>
+                        <input type="text" id="transferOrderNo" required placeholder="工單序號">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transferFromRegion">轉出區域 *</label>
+                        <input type="text" id="transferFromRegion" required placeholder="轉出區域">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="transferToCompany">轉入公司 *</label>
+                        <input type="text" id="transferToCompany" required placeholder="轉入公司名稱">
+                    </div>
+                    <div class="form-group">
+                        <label for="transferCreator">製單人 *</label>
+                        <input type="text" id="transferCreator" required placeholder="製單人姓名">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="transferNote">備註</label>
+                    <textarea id="transferNote" rows="2" placeholder="轉貨備註..."></textarea>
+                </div>
+                
+                <div class="transfer-items">
+                    <h4>轉貨商品</h4>
+                    <div class="items-header">
+                        <span>產品編號</span>
+                        <span>商品</span>
+                        <span>數量</span>
+                        <span>操作</span>
+                    </div>
+                    <div class="items-list" id="transferItemsList">
+                        <!-- 轉貨商品項目將在這裡動態生成 -->
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="addTransferItem()">
+                        <i class="fas fa-plus"></i> 添加商品
+                    </button>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewTransferModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">確認轉貨</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 新增出貨單模態框 -->
+    <div class="modal" id="newSalesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>新增出貨單</h2>
+                <button class="close-btn" onclick="closeNewSalesModal()">&times;</button>
+            </div>
+            <form id="salesForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salesDate">出貨日期 *</label>
+                        <input type="date" id="salesDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="salesOrderNo">工單序號 *</label>
+                        <input type="text" id="salesOrderNo" required placeholder="工單序號">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salesCustomer">客戶 *</label>
+                        <input type="text" id="salesCustomer" required placeholder="客戶名稱">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salesRegion">出貨區域 *</label>
+                        <select id="salesRegion" required>
+                            <option value="">請選擇出貨區</option>
+                            <option value="北部">北部</option>
+                            <option value="中部">中部</option>
+                            <option value="南部">南部</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="salesCreator">製單人 *</label>
+                        <input type="text" id="salesCreator" required placeholder="製單人姓名">
+                    </div>
+                </div>
+                
+                <!-- 商品資訊 -->
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salesProductCode">產品編號 *</label>
+                        <input type="text" id="salesProductCode" required placeholder="輸入產品編號">
+                    </div>
+                    <div class="form-group">
+                        <label for="salesProduct">商品 *</label>
+                        <select id="salesProduct" required onchange="toggleSalesProductInput()">
+                            <option value="">請選擇商品</option>
+                            <option value="new">+ 新增商品</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" id="newSalesProductGroup" style="display: none;">
+                    <label for="newSalesProductName">新商品名稱 *</label>
+                    <input type="text" id="newSalesProductName" placeholder="輸入新商品名稱">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="salesQuantity">出貨數量 *</label>
+                        <input type="number" id="salesQuantity" required min="1" placeholder="出貨數量">
+                    </div>
+                    <div class="form-group">
+                        <label for="salesNote">備註</label>
+                        <input type="text" id="salesNote" placeholder="出貨備註...">
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeNewSalesModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存出貨單</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 月度對照明細模態框 -->
+    <div class="modal" id="monthlyReportModal">
+        <div class="modal-content large-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-chart-bar"></i> 月度進出貨對照明細</h2>
+                <button class="close-btn" onclick="closeMonthlyReportModal()">&times;</button>
+            </div>
+            <div class="monthly-report-content">
+                <div class="report-filters">
+                    <div class="filter-group">
+                        <label for="reportMonth">選擇月份：</label>
+                        <input type="month" id="reportMonth" onchange="updateMonthlyReport()">
+                    </div>
+                    <div class="filter-group">
+                        <label for="reportRegion">區域：</label>
+                        <select id="reportRegion" onchange="updateMonthlyReport()">
+                            <option value="">全部區域</option>
+                            <option value="north">北部</option>
+                            <option value="central">中部</option>
+                            <option value="south">南部</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="updateMonthlyReport()">
+                        <i class="fas fa-refresh"></i> 更新報表
+                    </button>
+                </div>
+
+                <!-- 月度統計摘要 -->
+                <div class="monthly-summary" id="monthlySummary">
+                    <div class="summary-card purchase-summary">
+                        <div class="summary-header">
+                            <i class="fas fa-shopping-cart"></i>
+                            <h3>當月進貨</h3>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlyPurchaseCount">0</span>
+                                <span class="stat-label">進貨單數</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlyPurchaseQuantity">0</span>
+                                <span class="stat-label">進貨數量</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlyPurchaseProducts">0</span>
+                                <span class="stat-label">商品種類</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="summary-card sales-summary">
+                        <div class="summary-header">
+                            <i class="fas fa-cash-register"></i>
+                            <h3>當月出貨</h3>
+                        </div>
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlySalesCount">0</span>
+                                <span class="stat-label">出貨單數</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlySalesQuantity">0</span>
+                                <span class="stat-label">出貨數量</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number" id="monthlySalesProducts">0</span>
+                                <span class="stat-label">商品種類</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 進出貨對照表 -->
+                <div class="comparison-section">
+                    <h3>商品進出貨對照</h3>
+                    <div class="comparison-table">
+                        <div class="table-header">
+                            <div class="col-product">商品名稱</div>
+                            <div class="col-category">類別</div>
+                            <div class="col-region">區域</div>
+                            <div class="col-purchase">進貨數量</div>
+                            <div class="col-sales">出貨數量</div>
+                            <div class="col-balance">淨變化</div>
+                            <div class="col-current">目前庫存</div>
+                        </div>
+                        <div class="table-body" id="comparisonTableBody">
+                            <!-- 對照數據將在這裡動態生成 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 進出貨明細列表 -->
+                <div class="details-section">
+                    <div class="details-tabs">
+                        <button class="tab-btn active" onclick="switchDetailsTab('purchase')">
+                            <i class="fas fa-shopping-cart"></i> 進貨明細
+                        </button>
+                        <button class="tab-btn" onclick="switchDetailsTab('sales')">
+                            <i class="fas fa-cash-register"></i> 出貨明細
+                        </button>
+                    </div>
+                    <div class="details-content">
+                        <div class="details-tab active" id="purchaseDetails">
+                            <div class="details-list" id="monthlyPurchaseList">
+                                <!-- 進貨明細將在這裡動態生成 -->
+                            </div>
+                        </div>
+                        <div class="details-tab" id="salesDetails">
+                            <div class="details-list" id="monthlySalesList">
+                                <!-- 出貨明細將在這裡動態生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
